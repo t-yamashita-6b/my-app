@@ -1,7 +1,45 @@
+'use client'
 import Image from "next/image";
+import { useState, useEffect } from 'react';
 import styles from "./page.module.css";
 
+
+
+// サーバーサイドで実行される関数 (SSR)
+/*
+export async function fetchData() {
+  const res = await fetch(`http://localhost:3000/api/employees`);
+  if (!res.ok) {
+    throw new Error("Failed to fetch data");
+  }
+  return res.json();
+}
+*/
+
 export default function Home() {
+
+  // SSRでデータを取得
+ // const data = await fetchData();
+
+  // クライアントサイドで追加データを取得するための状態管理
+  const [clientData, setClientData] = useState([]);
+
+  // CSRでAPIを呼び出してデータを取得
+  useEffect(() => {
+    const fetchClientData = async () => {
+      try {
+        const res = await fetch('http://localhost:3000/api/employees'); // クライアントからAPIを呼び出し
+        const result = await res.json();
+		console.log(result.response)
+        setClientData(result.response);
+      } catch (error) {
+        console.error("Error fetching client data:", error);
+      }
+    };
+
+    fetchClientData();
+  }, []);
+
   return (
     <div className={styles.page}>
       <main className={styles.main}>
@@ -45,6 +83,11 @@ export default function Home() {
             Read our docs
           </a>
         </div>
+
+		<ul>
+		{ clientData ? clientData.map(d => <li key={d.last_name}>{d.first_name}</li>) : <li></li> } 
+		</ul>
+
       </main>
       <footer className={styles.footer}>
         <a
