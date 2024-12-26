@@ -26,3 +26,37 @@ export async function GET() {
   }
 }
 
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    const { name, position, department, salary } = req.body;
+
+    // 入力値の検証
+    if (!name || !position || !department || !salary) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    try {
+      // SQLクエリを実行
+      const query = `
+        INSERT INTO employees (name, position, department, salary)
+        VALUES ($1, $2, $3, $4)
+        RETURNING id
+      `;
+      const values = [name, position, department, salary];
+
+      const result = await pool.query(query, values);
+
+      res.status(201).json({
+        message: 'Employee added successfully',
+        employeeId: result.rows[0].id,
+      });
+    } catch (err) {
+      console.error('Database Error:', err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  } else {
+    // POST以外のリクエストに対応しない
+    res.setHeader('Allow', ['POST']);
+    res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+  }
+}
